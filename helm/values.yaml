@@ -26,6 +26,6 @@ dashboard:
 git_sync:
   image: k8s.gcr.io/git-sync:v3.1.2
   git_repo: "git@github.com:wei-go/locust-load-test.git"
-  git_branch: "master"
+  git_branch: "main"
   mount_path: /git
   git_project_name: performance_test
