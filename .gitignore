@@ -6,7 +6,6 @@ __pycache__/
 .idea
 *.pyc
 *.keytab
-trino
 krb5_beta.conf
 report
 .env
