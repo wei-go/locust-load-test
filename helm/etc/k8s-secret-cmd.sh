@@ -1,0 +1,1 @@
+kubectl create secret generic git-secret --from-file=ssh-privatekey={$YOUR_SSH_PRIVIATE_KEY} --from-file=ssh-publickey={$YOUR_SSH_PBULIC_KEY} --from-file=known_hosts={$YOUR_KNOWN_HOSTS_FILE_PATH}

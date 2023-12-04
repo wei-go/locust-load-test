@@ -1,0 +1,192 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust-master
+  labels:
+    component: master
+spec:
+  selector:
+    matchLabels:
+      component: master
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: master
+    spec:
+      containers:
+        - name: locust-master
+          image: {{ .Values.image_path }}
+          imagePullPolicy: Always
+          command:
+            [
+              "/bin/bash", 
+              "-c", 
+              "cd {{ .Values.git_sync.mount_path }}/{{ .Values.git_sync.git_project_name }} && locust --config=/etc/locust-config/master.conf"
+            ]
+          ports:
+            - containerPort: 8089
+          volumeMounts:
+          - name: locust-config-volume
+            mountPath: /etc/locust-config
+          - name: locust-folder
+            mountPath: {{ .Values.git_sync.mount_path }}
+
+      initContainers:
+        - name: git-sync
+          image: {{ .Values.git_sync.image }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            echo "================= DIRECTORY /etc/git-secret/..data/"
+            ls -la /etc/git-secret/..data/
+            echo "================= SYNC"
+            /git-sync
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GIT_SSH_KEY_FILE
+              value: "/etc/git-secret/ssh-privatekey"
+            - name: GIT_KNOWN_HOSTS
+              value: "false"
+            - name: GIT_SYNC_REPO
+              value: {{ .Values.git_sync.git_repo }}
+            - name: GIT_SYNC_BRANCH
+              value: {{ .Values.git_sync.git_branch }}
+            - name: GIT_SYNC_ROOT
+              value: {{ .Values.git_sync.mount_path }}
+            - name: GIT_SYNC_DEST
+              value: {{ .Values.git_sync.git_project_name }}
+            - name: GIT_SYNC_PERMISSIONS
+              value: "0777"
+            - name: GIT_SYNC_ONE_TIME
+              value: "true"
+            - name: GIT_SYNC_SSH
+              value: "true"
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: locust-folder
+              mountPath: {{ .Values.git_sync.mount_path }}
+            - name: git-secret
+              mountPath: /etc/git-secret
+      volumes:
+        - name: locust-config-volume
+          configMap: 
+            name: configmap-locust-conf
+            items:
+            - key: master.conf
+              path: master.conf
+        - name: locust-folder
+          emptyDir: {}
+        - name: git-secret
+          secret:
+            defaultMode: 256
+            secretName: git-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust-worker
+  labels:
+    component: worker
+spec:
+  selector:
+    matchLabels:
+      component: worker
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels:
+        component: worker
+    spec:
+      containers:
+        - name: locust-worker
+          image: {{ .Values.image_path }}
+          imagePullPolicy: Always
+          command:
+            [
+              "/bin/bash", 
+              "-c", 
+              "cd {{ .Values.git_sync.mount_path }}/{{ .Values.git_sync.git_project_name }} && locust --config=/etc/locust-config/worker.conf"
+            ]
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "1000m"
+            limits:
+              memory: "1Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: locust-config-volume
+              mountPath: /etc/locust-config
+            - name: locust-folder
+              mountPath: {{ .Values.git_sync.mount_path }}
+      initContainers:
+        - name: git-sync
+          image: {{ .Values.git_sync.image }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            echo "================= DIRECTORY /etc/git-secret/..data/"
+            ls -la /etc/git-secret/..data/
+            echo "================= SYNC"
+            /git-sync
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GIT_SSH_KEY_FILE
+              value: "/etc/git-secret/ssh-privatekey"
+            - name: GIT_KNOWN_HOSTS
+              value: "false"
+            - name: GIT_SYNC_REPO
+              value: {{ .Values.git_sync.git_repo }}
+            - name: GIT_SYNC_BRANCH
+              value: {{ .Values.git_sync.git_branch }}
+            - name: GIT_SYNC_ROOT
+              value: {{ .Values.git_sync.mount_path }}
+            - name: GIT_SYNC_DEST
+              value: {{ .Values.git_sync.git_project_name }}
+            - name: GIT_SYNC_PERMISSIONS
+              value: "0777"
+            - name: GIT_SYNC_ONE_TIME
+              value: "true"
+            - name: GIT_SYNC_SSH
+              value: "true"
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: locust-folder
+              mountPath: {{ .Values.git_sync.mount_path }}
+            - name: git-secret
+              mountPath: /etc/git-secret
+
+      volumes:
+        - name: locust-config-volume
+          configMap: 
+            name: configmap-locust-conf
+            items:
+            - key: worker.conf
+              path: worker.conf
+        - name: locust-folder
+          emptyDir: {}
+        - name: git-secret
+          secret:
+            defaultMode: 256
+            secretName: git-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust-service
+spec:
+  selector:
+    component: master
+  ports:
+  - name: ui
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: master
+    port: 5557
+    targetPort: 5557
+    protocol: TCP

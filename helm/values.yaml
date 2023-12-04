@@ -1,0 +1,31 @@
+image_path: {$YOUR_IMAGE_PATH_FOR_LOCUST}:{$TAG}
+replicas: 1
+
+locust_configs:
+  locustfile: example/test_taskset.py
+  host: ""
+  tags: ""
+  web_port: 8080
+  master_bind_port: 5557
+  timescale: true
+  grafana_host: grafana
+  grafana_port: 3000
+  pghost: locust-timescale
+  pgport: 5432
+  pgpassword: password
+  pguser: postgres
+  master_host: locust-service
+
+dashboard:
+  timescaledb:
+    image: {$YOUR_IMAGE_PATH_FOR_TIMESCALE}:{$TAG}
+  grafana:
+    image: {$YOUR_IMAGE_PATH_FOR_GRAFANA}:{$TAG}
+
+
+git_sync:
+  image: k8s.gcr.io/git-sync:v3.1.2
+  git_repo: "git@github.com:wei-go/locust-load-test.git"
+  git_branch: "master"
+  mount_path: /git
+  git_project_name: performance_test

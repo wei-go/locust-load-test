@@ -1,0 +1,12 @@
+kustomization.yml
+.DS_Store
+.vscode/
+venv/
+__pycache__/
+.idea
+*.pyc
+*.keytab
+trino
+krb5_beta.conf
+report
+.env

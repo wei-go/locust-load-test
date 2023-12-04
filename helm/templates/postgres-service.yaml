@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust-timescale
+  creationTimestamp: null
+  labels:
+    component: locust-timescale
+  name: locust-timescale
+spec:
+  ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+  selector:
+    component: locust-timescale
+status:
+  loadBalancer: {}

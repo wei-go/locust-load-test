@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-locust-conf
+data:
+  master.conf : |
+    [locust]
+    master = true
+    locustfile = {{ .Values.locust_configs.locustfile }}
+    host = {{ .Values.locust_configs.host}}
+    web-port = {{ .Values.locust_configs.web_port }}
+    master-bind-port = {{ .Values.locust_configs.master_bind_port }}
+    {{- if ne .Values.locust_configs.tags "" }}}
+    tags = {{ .Values.locust_configs.tags }}
+    {{- end }}
+
+    [timescale]
+    timescale = {{ .Values.locust_configs.timescale }}
+    pghost = {{ .Values.locust_configs.pghost }}
+    pgport = {{ .Values.locust_configs.pgport }}
+    pgpassword = {{ .Values.locust_configs.pgpassword }}
+    pguser = {{ .Values.locust_configs.pguser }}
+
+    [grafana]
+    grafana-url = http://{{ .Values.locust_configs.grafana_host }}:{{ .Values.locust_configs.grafana_port }}
+
+  worker.conf : |
+    [locust]
+    worker = true
+    locustfile = {{ .Values.locust_configs.locustfile }}
+    host = {{ .Values.locust_configs.host}}
+    master-host = {{ .Values.locust_configs.master_host }}
+    master-port = {{ .Values.locust_configs.master_bind_port }}
+    {{- if ne .Values.locust_configs.tags "" }}}
+    tags = {{ .Values.locust_configs.tags }}
+    {{- end }}
+    
+    [timescale]
+    timescale = {{ .Values.locust_configs.timescale }}
+    pghost = {{ .Values.locust_configs.pghost }}
+    pgport = {{ .Values.locust_configs.pgport }}
+    pgpassword = {{ .Values.locust_configs.pgpassword }}
+    pguser = {{ .Values.locust_configs.pguser }}
